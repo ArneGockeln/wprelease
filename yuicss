@@ -1,0 +1,2 @@
+#!/bin/bash
+java -jar /usr/local/share/yuicompressor/latest.jar --type css "$@"

@@ -1,0 +1,110 @@
+#!/bin/bash
+# Written by Arne Gockeln, https://arnegockeln.com
+
+# usage
+if [ $# -lt 1 ]; then
+	echo "This script clones the given folder, removes any git meta data, removes .sass-cache"
+	echo "if yui is enabled: "
+	echo "	- minifying of all css and js files"
+	echo "	- rename <script.css|.js> to <script.min.css|.js>"
+	echo "	- replace old script name with new script name in php files"
+	echo "The cloned folder name will be './<folder_with_git>_release'"
+	echo "Usage: "
+	echo "	$0 /path/to/folder_with_git/"
+	exit 1
+fi
+
+GITFOLDER=$1
+
+# if folder does not exists, exit script with usage info
+if [ ! -d "$GITFOLDER" ]; then
+	echo "Error: ${GITFOLDER} does not exist!"
+	exit 1
+fi
+
+# add trailingslash if missing
+GITFOLDER=$(echo "$GITFOLDER"|sed 's/\/$//g')/
+
+# mkdir temp folder
+GITTEMPFOLDER="./`basename $GITFOLDER`_release"
+
+# check if destination folder exists, and remove it
+if [ -d "$GITTEMPFOLDER" ]; then
+    echo "Previous release folder exists, removed.";
+    rm -rf $GITTEMPFOLDER;
+fi
+
+# create new release folder
+echo "Create release folder..."
+mkdir $GITTEMPFOLDER
+
+# copy all data
+rsync -a $GITFOLDER $GITTEMPFOLDER --exclude ".git" --exclude ".gitignore" --exclude ".DS_Store" --exclude ".sass-cache"
+
+echo "Cloned and cleaned to $GITTEMPFOLDER"
+
+# MINIFYING FILES
+
+# test if yuicss is available
+if hash yuicss 2>/dev/null; then
+    echo "Minifying css files..."
+    # find all css files
+    for css in $(find $GITTEMPFOLDER -type f -name "*.css")
+    do
+        # check if min.css not exists
+        if [[ $css != *"min.css"* ]]; then
+        		# prevent comments in style.css
+        		if [[ $css == *"/style.css"* ]]; then
+        			sed -i '' -e '1 s/^.*$/\/\*\!/' "$css"
+        		fi
+            # add .min.css
+            DESTCSSFILE="${css/.css/.min.css}"
+            # minify
+            yuicss "$css" > "$DESTCSSFILE"
+            echo "$css minified."
+            # remove original
+            rm "$css"
+            # replace style.min.css first comment line with WP compatible comment
+            if [[ $css == *"/style.css"* ]]; then
+            	sed -i '' -e '1 s/^.*$/\/\*/' "$DESTCSSFILE"
+            fi
+            # replace in php source files
+            for php in $(find $GITTEMPFOLDER -type f -name "*.php")
+            do
+                BASECSS="`basename $css`"
+                BASEDESTCSS="`basename $DESTCSSFILE`"
+                sed -i '' -e "s/$BASECSS/$BASEDESTCSS/" "$php"
+            done
+        fi
+    done
+    # minify css files
+    echo "done."
+fi
+
+# test if yuijs is available
+if hash yuijs 2>/dev/null; then
+    echo "Minifying js files..."
+    for js in $(find $GITTEMPFOLDER -type f -name "*.js")
+    do
+        if [[ $js != *"min.js"* ]]; then
+            # add .min.js
+            DESTJSFILE="${js/.js/.min.js}"
+            # minify
+            yuijs "$js" > "$DESTJSFILE"
+            echo "$js minified."
+            # remove original
+            rm "$js"
+            # replace in php source files
+            for php in $(find $GITTEMPFOLDER -type f -name "*.php")
+            do
+                BASEJS="`basename $js`"
+                BASEDESTJS="`basename $DESTJSFILE`"
+                sed -i '' -e "s/$BASEJS/$BASEDESTJS/" "$php"
+            done
+        fi
+    done
+    echo "done."
+fi
+
+# exit script
+exit 0
