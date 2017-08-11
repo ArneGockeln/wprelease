@@ -63,3 +63,17 @@ done.
 ```
 
 C-style comments starting with /*! are preserved. So before minifying `style.css` the first line will be replaced with `/*!` to prevent removing the entire theme informationen. After minifying the first line will be reset to `/*`.
+
+If you want to minify a single file, then you can do it like this:
+
+```
+$ yuicss source.css > destination.min.css
+```
+
+or 
+
+```
+$ yuijs source.js > destination.min.js 
+```
+
+That's it.
