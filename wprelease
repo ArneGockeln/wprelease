@@ -57,7 +57,7 @@ if hash yuicss 2>/dev/null; then
         		if [[ $css == *"/style.css"* ]]; then
         			sed -i '' -e '1 s/^.*$/\/\*\!/' "$css"
         		fi
-            # add .min.css
+        		# add .min.css
             DESTCSSFILE="${css/.css/.min.css}"
             # minify
             yuicss "$css" > "$DESTCSSFILE"
@@ -66,7 +66,10 @@ if hash yuicss 2>/dev/null; then
             rm "$css"
             # replace style.min.css first comment line with WP compatible comment
             if [[ $css == *"/style.css"* ]]; then
+            	# replace first comment line in style.min.css
             	sed -i '' -e '1 s/^.*$/\/\*/' "$DESTCSSFILE"
+            	# rename style.min.css to style.css
+            	mv "$DESTCSSFILE" "${DESTCSSFILE/.min.css/.css}"
             fi
             # replace in php source files
             for php in $(find $GITTEMPFOLDER -type f -name "*.php")
