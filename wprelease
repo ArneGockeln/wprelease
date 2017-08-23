@@ -71,6 +71,10 @@ if hash yuicss 2>/dev/null; then
             	# rename style.min.css to style.css
             	mv "$DESTCSSFILE" "${DESTCSSFILE/.min.css/.css}"
             fi
+    	    # rename editor-styles.min.css to editor-styles.css
+    	    if [[ $css == *"/editor-style.css"* ]]; then
+    		  mv "$DESTCSSFILE" "${DESTCSSFILE/.min.css/.css}"
+    	    fi
             # replace in php source files
             for php in $(find $GITTEMPFOLDER -type f -name "*.php")
             do
