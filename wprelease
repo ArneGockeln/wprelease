@@ -38,6 +38,8 @@ fi
 echo "Create release folder..."
 mkdir $GITTEMPFOLDER
 
+echo "Ignore: .git, .gitignore, .DS_Store, .sass-cache, .idea, *.sh, *.scss"
+
 # copy all data
 rsync -a "${GITFOLDER}" "${GITTEMPFOLDER}" --exclude=".git" --exclude=".gitignore" --exclude=".DS_Store" --exclude=".sass-cache" --exclude=".idea" --exclude="*.scss" --exclude="*.sh"
 
