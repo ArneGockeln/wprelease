@@ -39,7 +39,7 @@ echo "Create release folder..."
 mkdir $GITTEMPFOLDER
 
 # copy all data
-rsync -a $GITFOLDER $GITTEMPFOLDER --exclude ".git" --exclude ".gitignore" --exclude ".DS_Store" --exclude ".sass-cache" --exclude ".idea"
+rsync -a "${GITFOLDER}" "${GITTEMPFOLDER}" --exclude=".git" --exclude=".gitignore" --exclude=".DS_Store" --exclude=".sass-cache" --exclude=".idea" --exclude="*.scss" --exclude="*.sh"
 
 echo "Cloned and cleaned to $GITTEMPFOLDER"
 
