@@ -80,6 +80,11 @@ if hash yuicss 2>/dev/null; then
             # replace in php source files
             for php in $(find $GITTEMPFOLDER -type f -name "*.php")
             do
+                # prevent replacing style|.min|.css
+                if [[ $css == *"/style.css"* ]]; then
+                    continue
+                fi
+                # replace css filename in php file
                 BASECSS="`basename $css`"
                 BASEDESTCSS="`basename $DESTCSSFILE`"
                 sed -i '' -e "s/$BASECSS/$BASEDESTCSS/" "$php"
