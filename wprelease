@@ -3,20 +3,20 @@
 
 # usage
 if [ $# -lt 1 ]; then
-	echo "This script clones the given folder, removes any git meta data, removes .sass-cache"
-	echo "if yui is enabled: "
-	echo "	- minifying of all css and js files"
-	echo "	- rename <script.css|.js> to <script.min.css|.js>"
-	echo "	- replace old script name with new script name in php files"
-	echo "The cloned folder name will be './<folder_with_git>_release'"
-	echo "Usage: "
-	echo "	$0 /path/to/folder_with_git/"
+    echo "This script clones the given folder, removes any git meta data, removes .sass-cache"
+    echo "if yui is enabled: "
+    echo "	- minifying of all css and js files"
+    echo "	- rename <script.css|.js> to <script.min.css|.js>"
+    echo "	- replace old script name with new script name in php files"
+    echo "The cloned folder name will be './<folder_with_git>_release'"
+    echo "Usage: "
+    echo "	$0 /path/to/folder_with_git/"
     echo "Options: "
     echo "  $0 /path/to/folder_with_git -nocss"
     echo "Will ignore css minifying."
     echo "  $0 /path/to/folder_with_git -nojs"
     echo "Will ignore js minifying."
-	exit 1
+    exit 1
 fi
 
 GITFOLDER=$1
@@ -24,8 +24,8 @@ IGNOREMINFIER=$2
 
 # if folder does not exists, exit script with usage info
 if [ ! -d "$GITFOLDER" ]; then
-	echo "Error: ${GITFOLDER} does not exist!"
-	exit 1
+    echo "Error: ${GITFOLDER} does not exist!"
+    exit 1
 fi
 
 # add trailingslash if missing
@@ -62,11 +62,11 @@ if [ "$IGNOREMINFIER" != "-nocss" ]; then
         do
             # check if min.css not exists
             if [[ $css != *"min.css"* ]]; then
-            		# prevent comments in style.css
-            		if [[ $css == *"/style.css"* ]]; then
-            			sed -i '' -e '1 s/^.*$/\/\*\!/' "$css"
-            		fi
-            		# add .min.css
+                    # prevent comments in style.css
+                    if [[ $css == *"/style.css"* ]]; then
+                        sed -i '' -e '1 s/^.*$/\/\*\!/' "$css"
+                    fi
+                    # add .min.css
                 DESTCSSFILE="${css/.css/.min.css}"
                 # minify
                 yuicss "$css" > "$DESTCSSFILE"
@@ -75,15 +75,15 @@ if [ "$IGNOREMINFIER" != "-nocss" ]; then
                 rm "$css"
                 # replace style.min.css first comment line with WP compatible comment
                 if [[ $css == *"/style.css"* ]]; then
-                	# replace first comment line in style.min.css
-                	sed -i '' -e '1 s/^.*$/\/\*/' "$DESTCSSFILE"
-                	# rename style.min.css to style.css
-                	mv "$DESTCSSFILE" "${DESTCSSFILE/.min.css/.css}"
+                    # replace first comment line in style.min.css
+                    sed -i '' -e '1 s/^.*$/\/\*/' "$DESTCSSFILE"
+                    # rename style.min.css to style.css
+                    mv "$DESTCSSFILE" "${DESTCSSFILE/.min.css/.css}"
                 fi
-        	    # rename editor-styles.min.css to editor-styles.css
-        	    if [[ $css == *"/editor-style.css"* ]]; then
-        		  mv "$DESTCSSFILE" "${DESTCSSFILE/.min.css/.css}"
-        	    fi
+                # rename editor-styles.min.css to editor-styles.css
+                if [[ $css == *"/editor-style.css"* ]]; then
+                  mv "$DESTCSSFILE" "${DESTCSSFILE/.min.css/.css}"
+                fi
                 # replace in php source files
                 for php in $(find $GITTEMPFOLDER -type f -name "*.php")
                 do
