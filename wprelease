@@ -11,10 +11,16 @@ if [ $# -lt 1 ]; then
 	echo "The cloned folder name will be './<folder_with_git>_release'"
 	echo "Usage: "
 	echo "	$0 /path/to/folder_with_git/"
+    echo "Options: "
+    echo "  $0 /path/to/folder_with_git -nocss"
+    echo "Will ignore css minifying."
+    echo "  $0 /path/to/folder_with_git -nojs"
+    echo "Will ignore js minifying."
 	exit 1
 fi
 
 GITFOLDER=$1
+IGNOREMINFIER=$2
 
 # if folder does not exists, exit script with usage info
 if [ ! -d "$GITFOLDER" ]; then
@@ -48,76 +54,80 @@ echo "Cloned and cleaned to $GITTEMPFOLDER"
 # MINIFYING FILES
 
 # test if yuicss is available
-if hash yuicss 2>/dev/null; then
-    echo "Minifying css files..."
-    # find all css files
-    for css in $(find $GITTEMPFOLDER -type f -name "*.css")
-    do
-        # check if min.css not exists
-        if [[ $css != *"min.css"* ]]; then
-        		# prevent comments in style.css
-        		if [[ $css == *"/style.css"* ]]; then
-        			sed -i '' -e '1 s/^.*$/\/\*\!/' "$css"
-        		fi
-        		# add .min.css
-            DESTCSSFILE="${css/.css/.min.css}"
-            # minify
-            yuicss "$css" > "$DESTCSSFILE"
-            echo "$css minified."
-            # remove original
-            rm "$css"
-            # replace style.min.css first comment line with WP compatible comment
-            if [[ $css == *"/style.css"* ]]; then
-            	# replace first comment line in style.min.css
-            	sed -i '' -e '1 s/^.*$/\/\*/' "$DESTCSSFILE"
-            	# rename style.min.css to style.css
-            	mv "$DESTCSSFILE" "${DESTCSSFILE/.min.css/.css}"
-            fi
-    	    # rename editor-styles.min.css to editor-styles.css
-    	    if [[ $css == *"/editor-style.css"* ]]; then
-    		  mv "$DESTCSSFILE" "${DESTCSSFILE/.min.css/.css}"
-    	    fi
-            # replace in php source files
-            for php in $(find $GITTEMPFOLDER -type f -name "*.php")
-            do
-                # prevent replacing style|.min|.css
+if [ "$IGNOREMINFIER" != "-nocss" ]; then
+    if hash yuicss 2>/dev/null; then
+        echo "Minifying css files..."
+        # find all css files
+        for css in $(find $GITTEMPFOLDER -type f -name "*.css")
+        do
+            # check if min.css not exists
+            if [[ $css != *"min.css"* ]]; then
+            		# prevent comments in style.css
+            		if [[ $css == *"/style.css"* ]]; then
+            			sed -i '' -e '1 s/^.*$/\/\*\!/' "$css"
+            		fi
+            		# add .min.css
+                DESTCSSFILE="${css/.css/.min.css}"
+                # minify
+                yuicss "$css" > "$DESTCSSFILE"
+                echo "$css minified."
+                # remove original
+                rm "$css"
+                # replace style.min.css first comment line with WP compatible comment
                 if [[ $css == *"/style.css"* ]]; then
-                    continue
+                	# replace first comment line in style.min.css
+                	sed -i '' -e '1 s/^.*$/\/\*/' "$DESTCSSFILE"
+                	# rename style.min.css to style.css
+                	mv "$DESTCSSFILE" "${DESTCSSFILE/.min.css/.css}"
                 fi
-                # replace css filename in php file
-                BASECSS="`basename $css`"
-                BASEDESTCSS="`basename $DESTCSSFILE`"
-                sed -i '' -e "s/$BASECSS/$BASEDESTCSS/" "$php"
-            done
-        fi
-    done
-    # minify css files
-    echo "done."
+        	    # rename editor-styles.min.css to editor-styles.css
+        	    if [[ $css == *"/editor-style.css"* ]]; then
+        		  mv "$DESTCSSFILE" "${DESTCSSFILE/.min.css/.css}"
+        	    fi
+                # replace in php source files
+                for php in $(find $GITTEMPFOLDER -type f -name "*.php")
+                do
+                    # prevent replacing style|.min|.css
+                    if [[ $css == *"/style.css"* ]]; then
+                        continue
+                    fi
+                    # replace css filename in php file
+                    BASECSS="`basename $css`"
+                    BASEDESTCSS="`basename $DESTCSSFILE`"
+                    sed -i '' -e "s/$BASECSS/$BASEDESTCSS/" "$php"
+                done
+            fi
+        done
+        # minify css files
+        echo "done."
+    fi
 fi
 
 # test if yuijs is available
-if hash yuijs 2>/dev/null; then
-    echo "Minifying js files..."
-    for js in $(find $GITTEMPFOLDER -type f -name "*.js")
-    do
-        if [[ $js != *"min.js"* ]]; then
-            # add .min.js
-            DESTJSFILE="${js/.js/.min.js}"
-            # minify
-            yuijs "$js" > "$DESTJSFILE"
-            echo "$js minified."
-            # remove original
-            rm "$js"
-            # replace in php source files
-            for php in $(find $GITTEMPFOLDER -type f -name "*.php")
-            do
-                BASEJS="`basename $js`"
-                BASEDESTJS="`basename $DESTJSFILE`"
-                sed -i '' -e "s/$BASEJS/$BASEDESTJS/" "$php"
-            done
-        fi
-    done
-    echo "done."
+if [ "$IGNOREMINFIER" != "-nojs" ]; then
+    if hash yuijs 2>/dev/null; then
+        echo "Minifying js files..."
+        for js in $(find $GITTEMPFOLDER -type f -name "*.js")
+        do
+            if [[ $js != *"min.js"* ]]; then
+                # add .min.js
+                DESTJSFILE="${js/.js/.min.js}"
+                # minify
+                yuijs "$js" > "$DESTJSFILE"
+                echo "$js minified."
+                # remove original
+                rm "$js"
+                # replace in php source files
+                for php in $(find $GITTEMPFOLDER -type f -name "*.php")
+                do
+                    BASEJS="`basename $js`"
+                    BASEDESTJS="`basename $DESTJSFILE`"
+                    sed -i '' -e "s/$BASEJS/$BASEDESTJS/" "$php"
+                done
+            fi
+        done
+        echo "done."
+    fi
 fi
 
 # exit script
